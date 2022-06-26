@@ -141,7 +141,13 @@
                                             __prefix__))))
     => (just ["foo" "bar" "baz" "a" "b" "c" "d" "key1" "key2" "key3" "key4" "key5"
               "key6" "key7" "key8" "key9" "key10" "key11" "key12" "key13" "key14"
-              "rec" "urs" "total"] :in-any-order))
+              "rec" "urs" "total"] :in-any-order)
+
+    (strip-tags (src/candidates "" *ns* (ctx/parse-context
+                                         '(let [{:bar/keys [one two]
+                                                 :foo/keys [hello world]} m]
+                                            __prefix__))))
+    => (just ["one" "two" "hello" "world"] :in-any-order))
 
   (defmacro ^{:completion/locals :doseq} like-doseq [& _])
   (fact "in doseq and for :let bindings are supported"
