@@ -36,21 +36,23 @@
 
 (defn- try-read-replacing-maps [s]
   (try (binding [*read-eval* false]
-         (let [ns-aliases (ns-aliases *ns*)]
-           (-> s
-               ;; To avoid replacing '\{' and '\}' with '(compliment-hashmap ' and ')'
-               (str/replace "\\{" "(char 123)")
-               (str/replace "\\}" "(char 125)")
-               (str/replace "{" "(compliment-hashmap ")
-               (str/replace "}" ")")
-               ;; The reader breaks on aliased keywords if the respective
-               ;; namespace isn't imported into the current ns.
-               (str/replace #"::([-!?+*_<>.\w]+)/"
-                            (fn [[_ kw-ns]]
-                              (str ":" (get ns-aliases (symbol kw-ns) kw-ns) "/")))
-               read-string
-               restore-map-literals)))
+         (-> s
+             (str/replace "\\{" "(char 123)")
+             (str/replace "\\}" "(char 125)")
+             (str/replace #"::([-\w.]+)/"  ":")
+             (str/replace #"#:([-\w.]+)\{" "(compliment-hashmap ")
+             (str/replace "{" "(compliment-hashmap ")
+             (str/replace "}" ")")
+             read-string
+             restore-map-literals))
        (catch Exception ex)))
+
+(defn- try-read [s]
+  (try
+    (binding [*read-eval* false]
+      (read-string s))
+    (catch Exception ex
+      (try-read-replacing-maps s))))
 
 (defn- dumb-read-form
   "Take a presumably unfinished Clojure form and try to \"complete\" it so that it
@@ -69,12 +71,12 @@
                 (recur (rest r) to-append)
                 ;; Everything is bad - just give up
                 nil))
-        (try-read-replacing-maps (apply str unfinished-form-str to-append))))))
+        (try-read (apply str unfinished-form-str to-append))))))
 
 #_(dumb-read-form "(let [a {:b 1}, c {__prefix__")
 
 (defn- safe-read-context-string [^String context]
-  (or (try-read-replacing-maps context)
+  (or (try-read context)
       (dumb-read-form context)))
 
 (def ^:private context-cache
