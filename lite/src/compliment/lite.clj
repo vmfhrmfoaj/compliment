@@ -533,7 +533,8 @@
                           symbol
                           (resolve-namespace ns))
             ns-form-namespace (get {} :nil)
-            vars (cond scope (if (and literals (re-find #"#'$" literals))
+            vars (cond (= scope ns) (ns-interns ns)
+                       scope (if (and literals (re-find #"#'$" literals))
                                (ns-interns scope)
                                (ns-publics scope))
                        (and scope-name (nil? scope)) ()

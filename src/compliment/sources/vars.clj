@@ -68,6 +68,7 @@
       (let [scope (some-> scope-name symbol (resolve-namespace ns))
             ns-form-namespace ^{:lite '(get {} :nil)} (try-get-ns-from-context context)
             vars (cond
+                   (= scope ns) (ns-interns ns)
                    scope (if (and literals (re-find #"#'$" literals))
                            ;; If prefixed with #', suggest private vars too.
                            (ns-interns scope)
